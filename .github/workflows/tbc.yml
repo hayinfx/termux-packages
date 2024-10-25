@@ -1,0 +1,40 @@
+name: Termux Bootstrap Compilation
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'scripts/**'
+      - 'termux-packages/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: |
+        # Build the Docker image using the Dockerfile in the scripts folder.
+        docker build -t termux/package-builder:latest -f scripts/Dockerfile .
+
+    - name: Run Docker Container and Compile
+      run: |
+        # Run the Docker container and execute the build-bootstrap script inside.
+        docker run --rm -v ${{ github.workspace }}:/termux-packages termux/package-builder:latest bash -c "
+          cd /termux-packages &&
+          ./scripts/build-bootstrap.sh --architectures arm
+        "
+
+    - name: Upload Compiled Bootstrap Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: compiled-bootstrap
+        path: ./output/  # Adjust this path to match where the compiled files are stored.
