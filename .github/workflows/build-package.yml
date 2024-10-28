@@ -1,0 +1,83 @@
+name: build-package
+
+on:
+  push:
+    branches:
+      - master5  # Change this to the branch you want to trigger the action
+  repository_dispatch:
+    types:
+      - build-termux-bootstrap  # Custom event type name for manual triggering
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up timestamp
+      - name: Set timestamp
+        id: timestamp
+        run: echo "TIMESTAMP=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+
+      # Step 3: Run Docker and Generate Bootstrap
+      - name: Run Docker and Generate Bootstrap
+        run: |
+          # Run the Docker script
+          ./scripts/run-docker.sh
+
+          # Generate the bootstrap for aarch64 architecture
+ ./build-package.sh -a aarch64 termux-tools
+            ./build-package.sh -a aarch64 bash
+            ./build-package.sh -a aarch64 coreutils
+            ./build-package.sh -a aarch64 busybox
+            ./build-package.sh -a aarch64 dpkg
+
+      # Step 4: Upload the output folder as an artifact
+      - name: Upload output folder
+        uses: actions/upload-artifact@v3
+        with:
+          name: termux-output
+          path: output/
+
+      # Step 5: Commit and push the output folder to the root of the repository
+      - name: Commit and Push Output Folder
+        run: |
+          # Configure Git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Copy the output files to the root of the repository
+          cp -r output/* ./
+
+          # Add and commit the output files
+          git add .  # Add all changes in the root directory
+          git commit -m "Add output files for v1.0.0-${{ env.TIMESTAMP }}"
+
+          # Push the changes back to the repository
+          git push origin HEAD:${{ github.ref_name }}
+
+      # Step 6: Create a GitHub Release and upload the output folder
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v1.0.0-${{ env.TIMESTAMP }}  # Add timestamp to the tag name
+          release_name: Termux Bootstrap v1.0.0-${{ env.TIMESTAMP }}
+          draft: false
+          prerelease: false
+
+      # Step 7: Upload files to the release
+      - name: Upload output folder to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: output
+          asset_name: termux-output.zip
+          asset_content_type: application/zip
