@@ -3,7 +3,7 @@ name: build-package.
 on:
   push:
     branches:
-      - master5  # Change this to the branch you want to trigger the action
+      - master  # Change this to the branch you want to trigger the action
   repository_dispatch:
     types:
       - build-termux-bootstrap  # Custom event type name for manual triggering
