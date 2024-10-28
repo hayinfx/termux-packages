@@ -32,7 +32,7 @@ jobs:
           chmod +x ./scripts/build-bootstraps.sh
 
           # Generate the bootstrap for aarch64 architecture
-          ./scripts/build-bootstraps.sh -a aarch64
+          ./scripts/build-bootstraps.sh --architectures aarch64
 
       # Step 4: Upload the output folder as an artifact
       - name: Upload output folder
