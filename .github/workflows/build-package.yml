@@ -28,12 +28,15 @@ jobs:
           # Run the Docker script
           ./scripts/run-docker.sh
 
+          # Make build-package.sh executable
+          chmod +x ./build-package.sh
+
           # Generate the bootstrap for aarch64 architecture
-             ./build-package.sh -a aarch64 termux-tools
-            ./build-package.sh -a aarch64 bash
-            ./build-package.sh -a aarch64 coreutils
-            ./build-package.sh -a aarch64 busybox
-            ./build-package.sh -a aarch64 dpkg
+          ./build-package.sh -a aarch64 termux-tools
+          ./build-package.sh -a aarch64 bash
+          ./build-package.sh -a aarch64 coreutils
+          ./build-package.sh -a aarch64 busybox
+          ./build-package.sh -a aarch64 dpkg
 
       # Step 4: Upload the output folder as an artifact
       - name: Upload output folder
