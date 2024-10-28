@@ -3,7 +3,7 @@ name: Build Termux Package
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
@@ -19,6 +19,27 @@ jobs:
           sudo apt update
           sudo apt install -y git clang python3-pip wget
 
+      - name: Attempt to install libwxgtk3.2-dev
+        run: |
+          sudo add-apt-repository universe
+          sudo apt update
+          sudo apt install -y libwxgtk3.2-dev || sudo apt install -y libwxgtk3.0-gtk3-dev || exit 1
+
+      - name: Build wxWidgets from source if not available
+        if: failure()
+        run: |
+          # Install dependencies for wxWidgets build
+          sudo apt install -y libgtk-3-dev libjpeg-dev libtiff-dev libpng-dev
+          # Download and extract wxWidgets source
+          wget https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.1/wxWidgets-3.2.1.tar.bz2
+          tar xjf wxWidgets-3.2.1.tar.bz2
+          cd wxWidgets-3.2.1
+          # Configure and build
+          ./configure --with-gtk=3
+          make -j$(nproc)
+          sudo make install
+          sudo ldconfig
+
       - name: Set up Termux build environment
         run: |
           git clone https://github.com/termux/termux-packages.git
@@ -27,7 +48,7 @@ jobs:
 
       - name: Build package
         run: |
-          cd termux-packages/packages/<package-name>
+          cd termux-packages/packages/termux-tools
           ./build-package.sh -a aarch64 -f termux-tools
 
       - name: Upload artifacts
