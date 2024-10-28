@@ -29,7 +29,7 @@ jobs:
           ./scripts/run-docker.sh
 
           # Generate the bootstrap for aarch64 architecture
-          ./scripts/generate-bootstraps.sh --architectures aarch64
+          ./scripts/build-bootstraps.sh --architectures aarch64
 
       # Step 4: Upload the output folder as an artifact
       - name: Upload output folder
