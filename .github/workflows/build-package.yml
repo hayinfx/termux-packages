@@ -1,4 +1,4 @@
-name: build-package.
+name: Build 
 
 on:
   push:
@@ -28,15 +28,8 @@ jobs:
           # Run the Docker script
           ./scripts/run-docker.sh
 
-          # Make build-package.sh executable
-          chmod +x ./build-package.sh
-
           # Generate the bootstrap for aarch64 architecture
-          ./build-package.sh -a aarch64 termux-tools
-          ./build-package.sh -a aarch64 bash
-          ./build-package.sh -a aarch64 coreutils
-          ./build-package.sh -a aarch64 busybox
-          ./build-package.sh -a aarch64 dpkg
+          ./scripts/generate-bootstraps.sh --architectures aarch64
 
       # Step 4: Upload the output folder as an artifact
       - name: Upload output folder
@@ -45,24 +38,7 @@ jobs:
           name: termux-output
           path: output/
 
-      # Step 5: Commit and push the output folder to the root of the repository
-      - name: Commit and Push Output Folder
-        run: |
-          # Configure Git
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Copy the output files to the root of the repository
-          cp -r output/* ./
-
-          # Add and commit the output files
-          git add .  # Add all changes in the root directory
-          git commit -m "Add output files for v1.0.0-${{ env.TIMESTAMP }}"
-
-          # Push the changes back to the repository
-          git push origin HEAD:${{ github.ref_name }}
-
-      # Step 6: Create a GitHub Release and upload the output folder
+      # Step 5: Create a GitHub Release and upload the output folder
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -74,7 +50,7 @@ jobs:
           draft: false
           prerelease: false
 
-      # Step 7: Upload files to the release
+      # Step 6: Upload files to the release
       - name: Upload output folder to Release
         uses: actions/upload-release-asset@v1
         env:
